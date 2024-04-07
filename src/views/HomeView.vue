@@ -2,15 +2,19 @@
 <div>
     <h2>My Chores</h2>
     
-    <ChoresCardList :chores="myChores" :currentUser="currentUser"></ChoresCardList>
+    <ChoresCardList :chores="myChores" :currentUser="currentUser" />
     
+    <h2>Deductive Chores</h2>
+
+    <ChoresCardList :chores="deductiveChores" :currentUser="currentUser" />
+
     <h2>Mutual Unfinished Chores</h2>
     
-    <ChoresCardList :chores="unfinishedUnassignedChores" :currentUser="currentUser"></ChoresCardList>
+    <ChoresCardList :chores="unfinishedUnassignedChores" :currentUser="currentUser" />
     
     <h2>All Others' Unfinished Chores</h2>
     
-    <ChoresCardList :chores="foreignUnfinishedChores" :currentUser="currentUser"></ChoresCardList>
+    <ChoresCardList :chores="foreignUnfinishedChores" :currentUser="currentUser" />
 </div>
 </template>
 
@@ -36,13 +40,18 @@ export default {
         },
         unfinishedUnassignedChores() {
             return this.chores.filter(chore => {
-                return !chore.assignee && !this.isDone(chore)
+                return !chore.assignee && !this.isDone(chore) && chore.frequency
             })
         },
         foreignUnfinishedChores() {
             return this.chores.filter(chore => {
                 const isSomeoneElses = chore.assignee?.uid !== this.currentUser.uid
-                return chore.assignee && isSomeoneElses && !this.isDone(chore)
+                return chore.assignee && isSomeoneElses && !this.isDone(chore) && chore.frequency
+            })
+        },
+        deductiveChores() {
+            return this.chores.filter(chore => {
+                return !chore.frequency
             })
         }
     },
@@ -151,11 +160,11 @@ export default {
             
             switch (chore.frequency) {
                 case 'daily':
-                    return diffDays > 1
+                    return diffDays <= 1
                 case 'weekly':
-                    return diffDays > 7
+                    return diffDays <= 7
                 case 'fortnightly':
-                    return diffDays > 14
+                    return diffDays <= 14
                 default:
                     return undefined
             }

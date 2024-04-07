@@ -1,5 +1,5 @@
 <template>
-    <Card class="w-full md:w-fit flex-1 min-w-[33%] max-w-[50%] cursor-pointer hover:shadow-md" @click="onClick(chore)">
+    <Card class="w-full md:w-fit flex-1 md:min-w-[33%] md:max-w-[50%] cursor-pointer hover:shadow-md" @click="onClick(chore)">
         <template #title>
             <div class="flex flex-row justify-between gap-4 items-center">
                 <span>{{ chore.name }}</span>
@@ -29,6 +29,7 @@ import Card from "primevue/card"
 import Tag from "primevue/tag"
 import Avatar from "primevue/avatar"
 import AvatarGroup from "primevue/avatargroup"
+
 import db from "../firebaseInit.js"
 import { doc, updateDoc, getDocs, query, where, collection, arrayUnion, Timestamp } from "firebase/firestore"
 
@@ -51,7 +52,7 @@ export default {
                 acceptLabel: 'Yes',
                 accept: async () => {
                     const choreRef = doc(db, 'chores', chore.id)
-                    
+
                     const usersRef = collection(db, 'users')
                     const userQuery = query(usersRef, where('uid', '==', this.currentUser.uid))
                     const querySnapshot = await getDocs(userQuery);
@@ -60,9 +61,9 @@ export default {
                         // doc.data() is never undefined for query doc snapshots
                         currentUserId = doc.ref.path
                     });
-                    
+
                     const currentTime = Timestamp.fromDate(new Date())
-                    
+
                     await updateDoc(choreRef, {
                         last_done: currentTime,
                         activity: arrayUnion({

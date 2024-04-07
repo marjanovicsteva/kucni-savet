@@ -6,13 +6,13 @@
       </template>
       
       <template #item="{ item, props }">
-        <RouterLink v-if="!!currentUser === item.requiresAuth && item.route" :to="item.route" v-slot="{ href, navigate }" custom>
+        <RouterLink v-if="!!currentUser === !!item.requiresAuth && item.route" :to="item.route" v-slot="{ href, navigate }" custom>
           <a :href="href" v-bind="props.action" @click="navigate" class="flex align-items-center">
             <i v-if="item.icon" class="mr-2" :class="item.icon"></i>
             {{ item.label }}
           </a>
         </RouterLink>
-        <a href="http://google.com" v-else-if="item.action" @click="item.action" class="flex align-items-center" v-bind="props.action">
+        <a href="#!" v-else-if="!!currentUser === !!item.requiresAuth && item.action" @click="item.action" class="flex align-items-center" v-bind="props.action">
           <i v-if="item.icon" class="mr-2" :class="item.icon"></i>
           {{ item.label }}
         </a>
@@ -69,7 +69,7 @@ export default {
           label: 'Sign out',
           icon: 'pi pi-power-off',
           action: () => {
-            alert('Signout')
+            this.handleSignOut()
           },
           requiresAuth: true
         }
@@ -82,6 +82,8 @@ export default {
       const auth = getAuth()
       signOut(auth).then(() => {
         this.$router.push('/login')
+      }).catch((error) => {
+        console.log(error)
       })
     }
   },
