@@ -12,7 +12,7 @@ export default defineConfig({
           // dev mode vite resolves vue in other way
           // only in prod mode, `id === vue` is true
           if(id === 'vue-advanced-cropper') {
-            return path.resolve(__dirname, './node_modules/vue-advanced-cropper/dist/index.esm-bundler.js')
+            return path.resolve('/node_modules/vue-advanced-cropper/dist/index.esm-bundler.js')
           }
         }
       }))()
