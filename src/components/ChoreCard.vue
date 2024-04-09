@@ -102,7 +102,6 @@ export default {
             }
         },
         async sendAlert(event, chore) {
-            console.log(`Remind ${chore.assignee?.id || this.userToAlert} to do ${chore.name}`)
             const docRef = await addDoc(collection(db, 'alerts'), {
                 chore_id: chore.id,
                 user_id: chore.assignee?.id || this.userToAlert,

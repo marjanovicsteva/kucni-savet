@@ -104,7 +104,6 @@ export default {
 
       const unsubscribe = onSnapshot(q, (querySnapshot) => {
         querySnapshot.forEach(doc => {
-          console.log(doc.data())
           this.notifications.push({
             id: doc.id,
             fired_by: doc.data().fired_by.path,
