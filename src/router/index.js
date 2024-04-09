@@ -12,6 +12,13 @@ const router = createRouter({
             }
         },
         {
+            path: '/notifications',
+            component: () => import('../views/AlertsView.vue'),
+            meta: {
+                requiresAuth: true
+            }
+        },
+        {
             path: '/login',
             component: () => import('../views/LoginView.vue')
         },

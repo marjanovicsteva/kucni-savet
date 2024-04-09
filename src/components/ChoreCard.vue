@@ -6,19 +6,29 @@
                 <div>
                     <Avatar v-if="chore.assignee?.image" :image="chore.assignee?.image" class="mr-2" shape="circle" />
                     <AvatarGroup v-else>
-                        <Avatar v-for="image in images" :image="image" shape="circle" />
+                        <Avatar v-for="user in users" :image="user.image" shape="circle" />
                     </AvatarGroup>
                 </div>
             </div>
         </template>
-    
+
         <template #content>
-            <div class="flex flex-row justify-between gap-4 items-end">
+            <div class="flex flex-row justify-between gap-4 items-center">
                 <span class="flex gap-1">
                     <span :class="colorIfDone(chore)" v-if="chore.last_done">{{ formatDate(chore.last_done) }}</span>
                     <span class="text-gray-500">{{ chore.frequency || 'deductively' }}</span>
                 </span>
-                <span class="flex gap-2" v-if="chore.categories"><Tag v-for="category in chore.categories" :value="category" /></span>
+                <span class="flex gap-2 items-center">
+                    <Tag v-for="category in chore.categories" :value="category" />
+
+                    <span>
+                        <Button v-if="chore.assignee?.uid !== currentUser.uid" icon="pi pi-bell" severity="warning" rounded outlined @click.stop="onAlert($event, chore)" />
+                        <OverlayPanel ref="op">
+                            <Dropdown v-model="userToAlert" :options="users" optionLabel="name" optionValue="id" placeholder="Select user to alert" class="w-full md:w-14rem" />
+                            <Button class="mt-2 w-full" :disabled="!userToAlert" severity="warning" label="Alert" @click="sendAlert($event, chore)" />
+                        </OverlayPanel>
+                    </span>
+                </span>
             </div>
         </template>
     </Card>
@@ -29,22 +39,32 @@ import Card from "primevue/card"
 import Tag from "primevue/tag"
 import Avatar from "primevue/avatar"
 import AvatarGroup from "primevue/avatargroup"
+import Button from "primevue/button"
+import OverlayPanel from "primevue/overlaypanel"
+import Dropdown from "primevue/dropdown"
 
 import db from "../firebaseInit.js"
-import { doc, updateDoc, getDocs, query, where, collection, arrayUnion, Timestamp } from "firebase/firestore"
+import { doc, updateDoc, getDocs, addDoc, query, where, collection, arrayUnion, Timestamp } from "firebase/firestore"
 
 export default {
     props: [ 'chore', 'currentUser' ],
-    components: { Card, Tag, Avatar, AvatarGroup },
+    components: { Card, Tag, Avatar, AvatarGroup, Button, OverlayPanel, Dropdown },
     data() {
         return {
-            images: []
+            users: [],
+            userToAlert: null
+        }
+    },
+    computed: {
+        user() {
+            return this.users.find(user => user.uid === this.currentUser.uid)
         }
     },
     methods: {
         onClick(chore) {
             this.$confirm.require({
                 message: 'Are you sure you want to proceed?',
+                group: 'global',
                 header: 'Mark as Done',
                 icon: 'pi pi-exclamation-triangle',
                 rejectClass: 'p-button-secondary p-button-outlined',
@@ -73,6 +93,22 @@ export default {
                     })
                 }
             });
+        },
+        onAlert(event, chore) {
+            if (chore.assignee) {
+                this.sendAlert(event, chore)
+            } else {
+                this.$refs.op.toggle(event)
+            }
+        },
+        async sendAlert(event, chore) {
+            console.log(`Remind ${chore.assignee?.id || this.userToAlert} to do ${chore.name}`)
+            const docRef = await addDoc(collection(db, 'alerts'), {
+                chore_id: chore.id,
+                user_id: chore.assignee?.id || this.userToAlert,
+                created_at: Timestamp.fromDate(new Date()),
+                fired_by: `/users/${this.user.id}`
+            })
         },
         colorIfDone(chore) {
             if (!chore.last_done) {
@@ -117,17 +153,20 @@ export default {
                     return `${diffDays} days ago`
             }
         },
-        async getAllAvatars() {
+        async getAllUsers() {
             const querySnapshot = await getDocs(collection(db, 'users'))
             
             querySnapshot.forEach(firestoreDoc => {
-                this.images.push(firestoreDoc.data().image)
+                this.users.push({
+                    id: firestoreDoc.id,
+                    ...firestoreDoc.data()
+                })
             })
             
         }
     },
     async mounted() {
-        await this.getAllAvatars()
+        await this.getAllUsers()
     }
 }
 </script>

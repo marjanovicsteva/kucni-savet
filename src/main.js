@@ -8,6 +8,7 @@ import ToastService from 'primevue/toastservice'
 import ConfirmationService from 'primevue/confirmationservice'
 import 'primevue/resources/themes/aura-light-green/theme.css'
 import 'primeicons/primeicons.css'
+import 'croppie/croppie.css'
 
 import firebaseConfig from './firebaseConfig'
 // Import the functions you need from the SDKs you need
