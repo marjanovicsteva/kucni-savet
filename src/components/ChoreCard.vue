@@ -44,7 +44,7 @@ import OverlayPanel from "primevue/overlaypanel"
 import Dropdown from "primevue/dropdown"
 
 import db from "../firebaseInit.js"
-import { doc, updateDoc, getDocs, addDoc, query, where, collection, arrayUnion, Timestamp } from "firebase/firestore"
+import { doc, updateDoc, getDocs, addDoc, getDoc, query, where, collection, arrayUnion, Timestamp, increment } from "firebase/firestore"
 
 export default {
     props: [ 'chore', 'currentUser' ],
@@ -96,18 +96,49 @@ export default {
         },
         onAlert(event, chore) {
             if (chore.assignee) {
-                this.sendAlert(event, chore)
+                this.$confirm.require({
+                    message: `Do you want to remind ${chore.assignee.name} to finish this task?`,
+                    group: 'global',
+                    header: 'Ping inactive commune participants',
+                    icon: 'pi pi-bell',
+                    rejectClass: 'p-button-secondary p-button-outlined',
+                    rejectLabel: 'No',
+                    acceptClass: 'p-button-warning',
+                    acceptLabel: 'Yes',
+                    accept: async () => {
+                        await this.sendAlert(event, chore)
+                    }
+                });
             } else {
                 this.$refs.op.toggle(event)
             }
         },
         async sendAlert(event, chore) {
             const docRef = await addDoc(collection(db, 'alerts'), {
-                chore_id: chore.id,
-                user_id: chore.assignee?.id || this.userToAlert,
+                chore_id: doc(db, `/chores/${chore.id}`),
+                user_id: doc(db, `/users/${chore.assignee?.id || this.userToAlert}`),
                 created_at: Timestamp.fromDate(new Date()),
-                fired_by: `/users/${this.user.id}`
+                fired_by: doc(db, `/users/${this.user.id}`)
             })
+
+            const pingedUserRef = doc(db, 'users', chore.assignee?.id || this.userToAlert)
+            const pingedUserSnap = await getDoc(pingedUserRef)
+
+            if (pingedUserSnap.exists()) {
+                console.log(pingedUserSnap.data())
+                await updateDoc(pingedUserRef, {
+                    alerts: increment(1)
+                })
+            }
+
+            this.$toast.add({
+                severity: 'success',
+                summary: 'Pinged',
+                detail: `Successfully pinged ${pingedUserSnap.data().name}.`,
+                life: 3000
+            })
+
+            this.userToAlert = null
         },
         colorIfDone(chore) {
             if (!chore.last_done) {

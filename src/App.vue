@@ -22,7 +22,7 @@
   </div>
   
   <main class="w-full lg:w-4/5 xl:w-3/5 lg:mx-auto mt-12 px-3">
-    <RouterView :currentUser="currentUser" :notifications="notifications" />
+    <RouterView :currentUser="currentUser" :notifications="myNotifications" />
   </main>
   
   <Toast />
@@ -103,6 +103,8 @@ export default {
       const q = query(collection(db, 'alerts'))
 
       const unsubscribe = onSnapshot(q, (querySnapshot) => {
+        this.notifications = []
+
         querySnapshot.forEach(doc => {
           this.notifications.push({
             id: doc.id,
@@ -116,6 +118,11 @@ export default {
       });
     }
   },
+  computed: {
+    myNotifications() {
+      return this.notifications.filter(notification => notification.user_id === `users/${this.currentUser.userData.id}`)
+    }
+  },
   mounted() {
     const auth = getAuth()
     onAuthStateChanged(auth, user => {
@@ -125,7 +132,10 @@ export default {
       const q = query(usersRef, where('uid', '==', user.uid))
       const querySnapshot = getDocs(q).then(querySnapshot => {
         querySnapshot.forEach(doc => {
-          this.currentUser.userData = doc.data()
+          this.currentUser.userData = {
+            id: doc.id,
+            ...doc.data()
+          }
         })
         this.menuItems.find(item => item.route === '/notifications').badge = this.currentUser.userData.alerts
       })
