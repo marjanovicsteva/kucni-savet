@@ -42,8 +42,8 @@
                     adjustStencil: false
                 }"
                 :canvas="{
-                    height: 64,
-                    width: 64
+                    height: 150,
+                    width: 150
                 }"
                 image-restriction="stencil"
                 ref="cropper"
