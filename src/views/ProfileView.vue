@@ -66,7 +66,7 @@ import FileUpload from 'primevue/fileupload'
 import Button from 'primevue/button'
 
 import { Cropper, CircleStencil } from 'vue-advanced-cropper';
-import '/vue-advanced-cropper/dist/style.css';
+import 'vue-advanced-cropper/dist/style.css';
 
 import db from '../firebaseInit.js'
 import { collection, updateDoc, doc, where, query, onSnapshot } from 'firebase/firestore'
