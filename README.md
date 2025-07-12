@@ -1,6 +1,6 @@
 # Kucni Savet Online
 
-INSERT_IMAGE
+<img width="1359" height="947" alt="Screenshot 2025-07-12 at 22 13 16" src="https://github.com/user-attachments/assets/36adb83a-5f94-4462-a991-2d07cbf8da4a" />
 
 Application I made while living with roommates so we could manage our environment better and keep it consistently clean.
 
@@ -21,7 +21,8 @@ VITE_SUPABASE_KEY= # this value corresponds to "anon key" from supabase status
 
 You'll setup the whole backend using Supabase Studio. Run the SQL from `database_schema.sql` to create all the required tables (it was automatically generated with Supabase so it might not work). If it doesn't work you can replicate this database schema manually.
 
-INSERT_IMAGE
+<img width="1439" height="797" alt="supabase-schema-default" src="https://github.com/user-attachments/assets/5154ef1d-690e-41fb-b3ed-543e9a9dd378" />
+
 
 Once you created your tables you can run `example_chores.sql` for dummy data. Keep in minda that **ALL** users and chores are managed using Supabase GUI.
 
