@@ -8,11 +8,11 @@ Application I made while living with roommates so we could manage our environmen
 
 ### Setting up environment
 
-Clone this repository and run `npm install` in the newly created directory. This application depends on Supabase for backend, so you need to install that too. On macOS run `brew install supabase` and then `supabase start` inside your project root directory. You should be able to access Studio (Web GUI for managing you Supabase instance) on `http://127.0.0.1:54323` unless you specified otherwise. You can run `supabase status` to access helpful links and data.
+Clone this repository and run `npm install` in the newly created directory. This application depends on Supabase for backend, so you need to install that too. Supabase further depends on Docker so you need to have insta installed as well. Once you installed Docker, on macOS run `brew install supabase` and then `supabase start` inside your project root directory. You should be able to access Studio (Web GUI for managing you Supabase instance) on `http://127.0.0.1:54323` unless you specified otherwise. You can run `supabase status` to access helpful links and data.
 
 Copy following lines to your `.env` file:
 
-```env
+```shell
 VITE_SUPABASE_URL= # this value corresponds to "API URL" from supabase status
 VITE_SUPABASE_KEY= # this value corresponds to "anon key" from supabase status
 ```
