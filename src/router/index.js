@@ -2,7 +2,7 @@ import { createRouter, createWebHistory } from "vue-router"
 import { supabase } from "../../utils/supabase"
 
 const router = createRouter({
-    history: createWebHistory(import.meta.VITE_ENV === 'production' ? '/kucni-savet/' : '/'),
+    history: createWebHistory(import.meta.env.VITE_ENV === 'production' ? '/kucni-savet/' : '/'),
     routes: [
         {
             path: '/',
