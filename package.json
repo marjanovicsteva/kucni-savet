@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "prod": "vite build --base=/kucni-savet/",
+    "prod": "vite build --base=/kucni-savet/ && cp dist/index.html dist/404.html",
     "build": "vite build",
     "preview": "vite preview"
   },
