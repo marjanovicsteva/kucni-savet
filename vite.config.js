@@ -5,7 +5,7 @@ import vueDevTools from 'vite-plugin-vue-devtools'
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  base: import.meta.VITE_ENV === 'production' ? '/kucni-prevoz/' : '/',
+  base: import.meta.env.VITE_ENV === 'production' ? '/kucni-prevoz/' : '/',
   plugins: [
     vue(),
     vueDevTools()
