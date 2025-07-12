@@ -75,7 +75,7 @@ const onChoreUpdate = chore => {
 
 <template>
 <div>
-  <div>
+  <div v-if="myChores.length">
     <h2>My Chores</h2>
     <ChoresCardList :chores="myChores" @choreUpdate="onChoreUpdate" />
   </div>
