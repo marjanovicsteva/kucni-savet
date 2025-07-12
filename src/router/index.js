@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from "vue-router"
-import { getAuth, onAuthStateChanged } from "firebase/auth"
+import { supabase } from "../../utils/supabase"
 
 const router = createRouter({
     history: createWebHistory(),
@@ -32,17 +32,10 @@ const router = createRouter({
     ]
 })
 
-const getCurrentUser = () => {
-    return new Promise((resolve, reject) => {
-        const removeListener = onAuthStateChanged(
-            getAuth(),
-            user => {
-                removeListener()
-                resolve(user)
-            },
-            reject
-        )
-    })
+const getCurrentUser = async () => {
+        const { data: { user } } = await supabase.auth.getUser()
+
+        return !!user
 }
 
 router.beforeEach(async (to, from, next) => {

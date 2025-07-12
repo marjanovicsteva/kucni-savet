@@ -1,14 +1,11 @@
-<template>
-    <div class="flex gap-4 flex-wrap">
-        <ChoreCard v-for="chore in chores" :key="chore.id" :chore="chore" :currentUser="currentUser" />
-    </div>
-</template>
-
-<script>
+<script setup>
 import ChoreCard from "./ChoreCard.vue"
 
-export default {
-    components: { ChoreCard },
-    props: [ 'chores', 'currentUser' ]
-}
+defineProps([ 'chores' ])
 </script>
+
+<template>
+    <div class="flex gap-4 flex-wrap">
+        <ChoreCard v-for="chore in chores" :key="chore.id" :chore="chore" @choreUpdate="$emit('choreUpdate', $event)" />
+    </div>
+</template>

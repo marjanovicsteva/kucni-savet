@@ -1,153 +1,152 @@
-<template>
-  <div class="card">
-    <Menubar :model="menuItems" class="flex justify-between items-center">
-      <template #start>
-        <img src="@/assets/kso.svg" height="40" alt="">
-      </template>
-      
-      <template #item="{ item, props, root }">
-        <RouterLink v-if="!!currentUser === !!item.requiresAuth && item.route" :to="item.route" v-slot="{ href, navigate }" custom>
-          <a :href="href" v-bind="props.action" @click="navigate" class="flex align-items-center">
-            <i v-if="item.icon" class="mr-2" :class="item.icon"></i>
-            <span class="">{{ item.label }}</span>
-            <Badge v-if="item.badge" :class="{ 'ml-auto': !root, 'ml-2': root }" :value="item.badge" />
-          </a>
-        </RouterLink>
-        <a href="#!" v-else-if="!!currentUser === !!item.requiresAuth && item.action" @click="item.action" class="flex align-items-center" v-bind="props.action">
-          <i v-if="item.icon" class="mr-2" :class="item.icon"></i>
-          {{ item.label }}
-        </a>
-      </template>
-    </Menubar>
-  </div>
-  
-  <main class="w-full lg:w-4/5 xl:w-3/5 lg:mx-auto mt-12 px-3">
-    <RouterView :currentUser="currentUser" :notifications="myNotifications" />
-  </main>
-  
-  <Toast />
-  <ConfirmDialog group="global" />
-  
-  <footer>
-    <div class="w-full flex items-center justify-center p-4 text-gray-500 mt-8">
-      2024
-      &copy;&nbsp;
-      <a class="no-underline text-gray-500" href="https://github.com/marjanovicsteva">Stevan Marjanovic</a>
-    </div>
-  </footer>
-</template>
-
-<script>
-import { getAuth, onAuthStateChanged, signOut } from "firebase/auth"
+<script setup>
 import { RouterView, RouterLink } from "vue-router"
 import Menubar from "primevue/menubar"
 import Badge from "primevue/badge"
 import Toast from 'primevue/toast'
 import ConfirmDialog from 'primevue/confirmdialog'
 
-import db from './firebaseInit.js'
-import { collection, getDocs, updateDoc, getDoc, doc, where, query, onSnapshot } from 'firebase/firestore'
+import { supabase } from '../utils/supabase'
+import router from "./router"
+import { onMounted, ref } from "vue"
+import { useAuthStore } from "../utils/stores/auth"
 
-export default {
-  components: { RouterView, RouterLink, Menubar, Toast, ConfirmDialog, Badge },
-  data() {
-    return {
-      menuItems: [
-        {
-          label: 'Home',
-          route: '/',
-          icon: 'pi pi-home',
-          requiresAuth: true
-        },
-        {
-          label: 'Notifications',
-          route: '/notifications',
-          icon: 'pi pi-bell',
-          requiresAuth: true
-        },
-        {
-          label: 'Profile',
-          route: '/profile',
-          icon: 'pi pi-user',
-          requiresAuth: true
-        },
-        {
-          label: 'Login',
-          route: '/login',
-          icon: 'pi pi-lock'
-        },
-        {
-          label: 'Sign out',
-          icon: 'pi pi-power-off',
-          action: () => {
-            this.handleSignOut()
-          },
-          requiresAuth: true
-        }
-      ],
-      currentUser: null,
-      userData: null,
-      notifications: []
-    }
+const auth = useAuthStore()
+
+const menuItems = ref([
+  {
+    label: 'Home',
+    route: '/',
+    icon: 'pi pi-home',
+    requiresAuth: true
   },
-  methods: {
-    handleSignOut() {
-      const auth = getAuth()
-      signOut(auth).then(() => {
-        this.$router.push('/login')
-      }).catch((error) => {
-        console.log(error)
-      })
+  {
+    label: 'Notifications',
+    route: '/notifications',
+    icon: 'pi pi-bell',
+    requiresAuth: true
+  },
+  {
+    label: 'Profile',
+    route: '/profile',
+    icon: 'pi pi-user',
+    requiresAuth: true
+  },
+  {
+    label: 'Login',
+    route: '/login',
+    icon: 'pi pi-lock'
+  },
+  {
+    label: 'Sign out',
+    icon: 'pi pi-power-off',
+    action: () => {
+      handleSignOut()
     },
-    async getAllNotifications() {
-      const q = query(collection(db, 'alerts'))
-
-      const unsubscribe = onSnapshot(q, (querySnapshot) => {
-        this.notifications = []
-
-        querySnapshot.forEach(doc => {
-          this.notifications.push({
-            id: doc.id,
-            fired_by: doc.data().fired_by.path,
-            user_id: doc.data().user_id.path,
-            chore_id: doc.data().chore_id.path,
-            received_at: doc.data().received_at?.toDate(),
-            created_at: doc.data().created_at?.toDate()
-          })
-        })
-      });
-    }
-  },
-  computed: {
-    myNotifications() {
-      return this.notifications.filter(notification => notification.user_id === `users/${this.currentUser.userData.id}`)
-    }
-  },
-  mounted() {
-    const auth = getAuth()
-    onAuthStateChanged(auth, user => {
-      this.currentUser = user
-
-      const usersRef = collection(db, 'users')
-      const q = query(usersRef, where('uid', '==', user.uid))
-      const querySnapshot = getDocs(q).then(querySnapshot => {
-        querySnapshot.forEach(doc => {
-          this.currentUser.userData = {
-            id: doc.id,
-            ...doc.data()
-          }
-        })
-        this.menuItems.find(item => item.route === '/notifications').badge = this.currentUser.userData.alerts
-      })
-
-      if (user) {
-        this.getAllNotifications()
-      }
-    })
+    requiresAuth: true
   }
+])
+
+const unreadNotifications = ref(0)
+
+const handleSignOut = async () => {
+  const { error } = await supabase.auth.signOut()
+
+  if (error) {
+    console.error(error)
+    return
+  }
+
+  auth.$patch({
+    user: null
+  })
+  router.push('/login')
 }
+
+const getNotifications = async () => {
+  if (!auth.user) {
+    unreadNotifications.value = 0
+    return
+  }
+
+  const { count, error } = await supabase.from('alerts').select('*', { count: 'exact', head: true }).eq('for', auth.user.id).is('received', null)
+
+  if (error) {
+    console.error("ERROR getNotifications")
+    console.error(error)
+    return
+  }
+
+  unreadNotifications.value = count
+}
+
+onMounted(async () => {
+  const { data } = await supabase.auth.getUser()
+
+  auth.$patch({
+    user: data.user
+  })
+  
+  if (auth.user === null) {
+    router.push("/login")
+  } else {
+    await getNotifications()
+    menuItems.value.find(item => item.route === '/notifications').badge = unreadNotifications.value
+
+    // Subscripbe to notification changes
+    const channels = supabase.channel('alert-channel')
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'alerts' },
+        async (payload) => {
+          console.log("UPDATE", payload)
+          await getNotifications()
+          menuItems.value.find(item => item.route === '/notifications').badge = unreadNotifications.value
+        }
+      )
+      .subscribe()
+  }
+})
 </script>
 
-<style scoped>
+<template>
+  <div class="flex flex-col justify-between min-h-screen">
+    <div>
+      <div class="card m-2">
+        <Menubar :model="menuItems" class="flex justify-between items-center">
+          <template #start>
+            <img src="@/assets/kso.svg" height="40" alt="">
+          </template>
+          
+          <template #item="{ item, props, root }">
+            <RouterLink v-if="!!auth.user === !!item.requiresAuth && item.route" :to="item.route" v-slot="{ href, navigate }" custom>
+              <a :href="href" v-bind="props.action" @click="navigate" class="flex align-items-center">
+                <i v-if="item.icon" class="mr-2" :class="item.icon"></i>
+                <span class="">{{ item.label }}</span>
+                <Badge v-if="item.badge" :class="{ 'ml-auto': !root, 'ml-2': root }" :value="item.badge" />
+              </a>
+            </RouterLink>
+            <a href="#!" v-else-if="!!auth.user === !!item.requiresAuth && item.action" @click="item.action" class="flex align-items-center" v-bind="props.action">
+              <i v-if="item.icon" class="mr-2" :class="item.icon"></i>
+              {{ item.label }}
+            </a>
+          </template>
+        </Menubar>
+      </div>
 
-</style>
+      <main class="w-full lg:w-4/5 xl:w-3/5 lg:mx-auto mt-12 px-3">
+        <RouterView />
+      </main>
+    </div>
+    
+    <footer>
+      <div class="w-full flex items-center justify-center p-4 text-gray-500 mt-8">
+        2024
+        &copy;&nbsp;
+        <a class="no-underline text-gray-500" href="https://github.com/marjanovicsteva">Stevan Marjanovic</a>
+      </div>
+    </footer>
+  </div>
+
+  <Toast />
+  <ConfirmDialog group="global" />
+</template>
